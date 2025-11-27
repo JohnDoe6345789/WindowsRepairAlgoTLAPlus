@@ -27,8 +27,8 @@ VerticesOfTriangle(t) == Vertices[t]
 
 EdgesOfTriangle(t) ==
     LET vs == VerticesOfTriangle(t) IN
-        { {v1, v2} :
-              v1 \in vs /\ v2 \in vs /\ v1 # v2 }
+        { {u, w} :
+              u \in vs /\ w \in vs /\ u # w }
 
 Edges(mesh) ==
     UNION { EdgesOfTriangle(t) : t \in mesh }
