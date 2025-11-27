@@ -6,8 +6,9 @@ EXTENDS STLRepair, FiniteSets
 (***************************************************************************)
 
 VARIABLES
-    phase,   \* Current phase of the pipeline
-    mesh     \* Current mesh (subset of Triangle)
+    phase,     \* Current phase of the pipeline
+    mesh,      \* Current mesh (subset of Triangle)
+    inputMesh  \* Original input mesh, for refinement checking
 
 PhaseType == {"RAW", "CLEANED", "HOLE_FILLED", "FINAL"}
 
@@ -30,7 +31,7 @@ FillHoles(m) ==
                        <= MeshDistance(m, m3)
 
 FinalRepair(m) ==
-    \* Optionally, we could call VoxelRemesh here instead.
+    \* In a richer model, this could use voxel remeshing, etc.
     FillHoles(CleanTriangleSoup(m))
 
 (***************************************************************************)
@@ -40,26 +41,33 @@ FinalRepair(m) ==
 Init ==
     /\ phase = "RAW"
     /\ mesh \subseteq Triangle
-    /\ mesh # {}    \* some non-empty starting mesh
+    /\ mesh # {}
+
+InitWithInput ==
+    /\ Init
+    /\ inputMesh = mesh
 
 Next ==
     \/ /\ phase = "RAW"
        /\ mesh' = CleanTriangleSoup(mesh)
        /\ phase' = "CLEANED"
+       /\ inputMesh' = inputMesh
 
     \/ /\ phase = "CLEANED"
        /\ mesh' = FillHoles(mesh)
        /\ phase' = "HOLE_FILLED"
+       /\ inputMesh' = inputMesh
 
     \/ /\ phase = "HOLE_FILLED"
        /\ mesh' = mesh
        /\ phase' = "FINAL"
+       /\ inputMesh' = inputMesh
 
     \/ /\ phase = "FINAL"
-       /\ UNCHANGED <<mesh, phase>>
+       /\ UNCHANGED <<mesh, phase, inputMesh>>
 
-Spec ==
-    Init /\ [][Next]_<<mesh, phase>>
+SpecWithInput ==
+    InitWithInput /\ [][Next]_<<mesh, phase, inputMesh>>
 
 (***************************************************************************)
 (* Invariants and refinement                                               *)
@@ -71,24 +79,6 @@ InvBasic ==
 
 InvFinalValidity ==
     (phase = "FINAL") => IsValidMesh(mesh)
-
-(*
-  Refinement: the final mesh equals the abstract minimal Repair of the input.
-  To state that, we need to remember the original input mesh.
-*)
-
-VARIABLES inputMesh
-
-InitWithInput ==
-    /\ Init
-    /\ inputMesh = mesh
-
-NextWithInput ==
-    /\ Next
-    /\ inputMesh' = inputMesh
-
-SpecWithInput ==
-    InitWithInput /\ [][NextWithInput]_<<mesh, phase, inputMesh>>
 
 Refinement ==
     (phase = "FINAL") => mesh = Repair(inputMesh)
