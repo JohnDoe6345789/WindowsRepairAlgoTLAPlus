@@ -2,18 +2,22 @@
 EXTENDS Naturals, FiniteSets
 
 (***************************************************************************)
-(* Constants                                                               *)
+(* Fixed small universe for TLC runs                                       *)
 (***************************************************************************)
 
-CONSTANTS
-    Vertex,      \* Finite set of abstract vertices
-    Triangle,    \* Finite set of abstract triangles
-    Vertices     \* Function: Triangle -> {3-elem subsets of Vertex}
+CONSTANTS v1, v2, v3, v4, t1, t2, t3
 
-ASSUME /\ Vertex # {}
-       /\ Triangle # {}
-       /\ Vertices \in [Triangle -> SUBSET Vertex]
-       /\ \A t \in Triangle : Cardinality(Vertices[t]) = 3
+Vertex  == {v1, v2, v3, v4}
+Triangle == {t1, t2, t3}
+
+(*
+  For this model, we hard-code which vertices belong to which triangle.
+  This avoids needing a Vertices constant in the .cfg file.
+*)
+Vertices ==
+    [ t1 |-> {v1, v2, v3},
+      t2 |-> {v2, v3, v4},
+      t3 |-> {v1, v3, v4} ]
 
 (***************************************************************************)
 (* Basic mesh operators                                                    *)
