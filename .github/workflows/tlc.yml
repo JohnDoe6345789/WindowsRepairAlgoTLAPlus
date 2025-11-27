@@ -24,10 +24,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # If you ever need a specific Python version, add setup-python here
+      # - uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+
       - name: Run TLC and capture logs
         run: |
-          chmod +x scripts/bootstrap.sh scripts/run-tlc.sh
-          ./scripts/run-tlc.sh
+          python3 scripts/tlaplus.py run
 
       - name: Push TLC results to ci/test-results branch
         if: always() && github.ref == 'refs/heads/main'
@@ -45,7 +49,7 @@ jobs:
           mkdir -p ci/test-results
 
           # Copy latest results into branch; you can add timestamps/paths as you like
-          cp -r ci-results/* ci/test-results/
+          cp -r ci-results/* ci/test-results/ || true
 
           git add ci/test-results
 
